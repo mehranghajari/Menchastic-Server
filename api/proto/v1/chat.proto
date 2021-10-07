@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-option go_package = "./menchastic";
+option go_package = "./";
 
-package menchastic;
+package v1;
 
 service ChatService {
     rpc JoinChannel(Channel) returns (stream Message) {}
