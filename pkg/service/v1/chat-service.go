@@ -61,5 +61,3 @@ func NewServer() *chatServiceServer {
 	fmt.Println(s)
 	return s
 }
-
-
