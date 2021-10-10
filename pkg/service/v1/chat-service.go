@@ -10,14 +10,20 @@ import (
 type chatServiceServer struct {
 	chatpb.UnimplementedChatServiceServer
 	mu      sync.Mutex
-	channel map[string][]chan *chatpb.Message
+	channel map[string] map[string] chan *chatpb.Message 
 }
 
 func (s *chatServiceServer) JoinChannel(ch *chatpb.Channel, msgStream chatpb.ChatService_JoinChannelServer) error {
-
+	
 	msgChannel := make(chan *chatpb.Message)
-	s.channel[ch.Name] = append(s.channel[ch.Name], msgChannel)
 
+	if s.channel[ch.Name] == nil{
+		fmt.Printf("create map for this room: [%v][chan]\n", ch.SendersName)
+		s.channel[ch.Name] = map[string] chan *chatpb.Message {}
+	}
+
+
+	s.channel[ch.Name][ch.SendersName] = msgChannel
 	// doing this never closes the stream
 	for {
 		select {
@@ -46,8 +52,10 @@ func (s *chatServiceServer) SendMessage(msgStream chatpb.ChatService_SendMessage
 
 	go func() {
 		streams := s.channel[msg.Channel.Name]
-		for _, msgChan := range streams {
-			msgChan <- msg
+		for senderName, msgChan := range streams {
+			if senderName != msg.Sender{
+				msgChan <- msg
+			}
 		}
 	}()
 
@@ -56,7 +64,7 @@ func (s *chatServiceServer) SendMessage(msgStream chatpb.ChatService_SendMessage
 
 func NewServer() *chatServiceServer {
 	s := &chatServiceServer{
-		channel: make(map[string][]chan *chatpb.Message),
+		channel: make(map[string] map[string] chan *chatpb.Message ),
 	}
 	fmt.Println(s)
 	return s
