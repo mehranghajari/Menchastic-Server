@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
-	chatpb "github.com/mehranghajari/Menchastic-Server/pkg/api/v1"
+	chatpb "github.com/mehranghajari/Menchastic/backend/pkg/api/v1"
 )
 
 type chatServiceServer struct {

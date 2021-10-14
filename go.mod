@@ -1,4 +1,4 @@
-module github.com/mehranghajari/Menchastic-Server
+module github.com/mehranghajari/Menchastic
 
 go 1.14
 

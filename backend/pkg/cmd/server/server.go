@@ -5,8 +5,8 @@ import (
 	"log"
 	"net"
 	"google.golang.org/grpc"
-	service "github.com/mehranghajari/Menchastic-Server/pkg/service/v1"
-	chatpb "github.com/mehranghajari/Menchastic-Server/pkg/api/v1"
+	service "github.com/mehranghajari/Menchastic/backend/pkg/service/v1"
+	chatpb "github.com/mehranghajari/Menchastic/backend/pkg/api/v1"
 )
 
 
