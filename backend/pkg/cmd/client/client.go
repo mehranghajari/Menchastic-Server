@@ -9,7 +9,7 @@ import (
 	"log"
 	"os"
 	"google.golang.org/grpc"
-	chatpb "github.com/mehranghajari/Menchastic-Server/pkg/api/v1"
+	chatpb "github.com/mehranghajari/Menchastic/backend/pkg/api/v1"
 	"sync"
 )
 
