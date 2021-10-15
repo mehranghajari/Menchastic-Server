@@ -12,6 +12,7 @@ service ChatService {
 message Channel {
     string name = 1;
     string senders_name = 2;
+
 }
 
 message Message {

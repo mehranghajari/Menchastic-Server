@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+option go_package = "backend/pkg/api/v2";
+
+package v2;
+
+service MenchasticService {
+    rpc CreateRoom(RequestCreateRoom) returns (stream ResponseRoom);
+    rpc ListRoom(RequestGame) returns (Rooms);
+    rpc JoinRoom(RequestJoinRoom) returns (stream ResponseRoom);
+}
+
+message RequestCreateRoom {
+    string name = 2;
+    string isPrivate = 3;
+    string secretKey = 4;
+    Member owner = 5;
+}
+
+message ResponseRoom {
+    Room room = 2;
+}
+
+message Room {
+    int64 id = 1;
+    string name = 2;
+    string isPrivate = 3;
+    string secretKey = 4;
+    Member owner = 5;
+    Members members = 6;
+}
+
+message Members {
+    repeated Member member = 1;
+}
+
+message Member {
+    string username= 1;
+    string displayName = 2;
+}
+
+message RequestGame {
+    GameName gameName = 1;
+}
+
+enum GameName {
+    MENCH = 0;
+    SNAKE = 1;
+}
+
+message RequestJoinRoom {
+    int64 id = 1;
+    string secretKey = 2;
+    Member member = 3;
+}
+
+message Rooms {
+    repeated Room rooms = 1;
+}
+
+
