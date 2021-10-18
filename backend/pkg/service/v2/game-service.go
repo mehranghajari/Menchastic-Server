@@ -1,8 +1,9 @@
-package v1
+package v2
 
 import (
 	"fmt"
 	"sync"
+	"context"
 	gamepb "github.com/mehranghajari/Menchastic/backend/pkg/api/v2"
 )
 
@@ -13,7 +14,7 @@ type MenchasticServiceServer struct {
 	gamepb.UnimplementedMenchasticServiceServer
 	mu      sync.Mutex
 
-	rooms []gamepb.Room
+	rooms gamepb.Rooms
 	roomsChannels map[roomID] map[userneme] chan *gamepb.ResponseRoom
 }
 
@@ -34,7 +35,9 @@ func (s *MenchasticServiceServer) CreateRoom( req *gamepb.RequestCreateRoom, msg
 			},
 		},
 	}
-	s.rooms = append(s.rooms, *room)
+	s.mu.Lock()
+	s.rooms.Rooms = append(s.rooms.Rooms, room)
+	s.mu.Unlock()
 
 	msgChannel := make(chan *gamepb.ResponseRoom )
 	// Create Room channel
@@ -52,12 +55,13 @@ func (s *MenchasticServiceServer) CreateRoom( req *gamepb.RequestCreateRoom, msg
 	}
 }
 
-func (s *MenchasticServiceServer) ListRoom( req *gamepb.RequestGame)  ( gamepb.Rooms, error) {
+func (s *MenchasticServiceServer) ListRoom( C context.Context,req *gamepb.RequestGame)  ( *gamepb.Rooms, error) {
 	
-	var rooms gamepb.Rooms
-	
+	for _ , room := range s.rooms.Rooms{
+		fmt.Println(room.GetName() , room.GetId())
+	}
 
-	return rooms, nil
+	return &s.rooms, nil
 
 }
 
@@ -84,6 +88,7 @@ func (s *MenchasticServiceServer) JoinRoom( req *gamepb.RequestJoinRoom, msgStre
 func NewServer() *MenchasticServiceServer {
 	s := &MenchasticServiceServer{
 		roomsChannels: make(map[roomID] map[userneme] chan *gamepb.ResponseRoom ),
+		rooms: gamepb.Rooms{},
 	}
 	fmt.Println(s)
 	return s

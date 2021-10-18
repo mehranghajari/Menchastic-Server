@@ -5,8 +5,8 @@ import (
 	"log"
 	"net"
 	"google.golang.org/grpc"
-	service "github.com/mehranghajari/Menchastic/backend/pkg/service/v1"
-	chatpb "github.com/mehranghajari/Menchastic/backend/pkg/api/v1"
+	service "github.com/mehranghajari/Menchastic/backend/pkg/service/v2"
+	gamepb "github.com/mehranghajari/Menchastic/backend/pkg/api/v2"
 )
 
 
@@ -19,6 +19,6 @@ func main() {
 
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	chatpb.RegisterChatServiceServer(grpcServer, service.NewServer())
+	gamepb.RegisterMenchasticServiceServer(grpcServer, service.NewServer())
 	grpcServer.Serve(lis)
 }
