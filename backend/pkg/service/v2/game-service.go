@@ -71,6 +71,24 @@ func (s *MenchasticServiceServer) JoinRoom( req *gamepb.RequestJoinRoom, msgStre
 	msgChannel := make(chan *gamepb.ResponseRoom )
 
 	s.roomsChannels[roomID(req.GetId())][userneme(req.Member.GetUsername())] = msgChannel
+
+	fmt.Println(req.Member.GetUsername() , "joined the room " , req.GetId())
+
+	// send message to other members of room
+	updatedRoom := &gamepb.Room{
+		Id: req.GetId(),
+		Name: "Mench",
+	}
+	go func() {
+		streams := s.roomsChannels[roomID(req.GetId())]
+		for senderName, msgChan := range streams {
+			if string(senderName) != req.Member.GetUsername(){
+				msgChan <- &gamepb.ResponseRoom{
+					Room: updatedRoom,
+				}
+			}
+		}
+	}()
 	
 	// doing this never closes the stream
 	for {

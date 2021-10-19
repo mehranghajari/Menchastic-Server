@@ -1,70 +1,99 @@
 package main
 
 import (
-	"bufio"
+	//"bufio"
 	"context"
 	"flag"
 	"fmt"
 	"io"
 	"log"
-	"os"
+	//"os"
 	"google.golang.org/grpc"
-	chatpb "github.com/mehranghajari/Menchastic/backend/pkg/api/v1"
-	"sync"
+	gamepb "github.com/mehranghajari/Menchastic/backend/pkg/api/v2"
 )
 
-var channelName = flag.String("channel", "default", "Channel name for chatting")
-var senderName = flag.String("sender", "default", "Senders name")
+var roomID = flag.String("roomID", "1", "room id for game")
+var senderName = flag.String("sender", "Mehran", "Senders name")
 var tcpServer = flag.String("server", ":5400", "Tcp server")
 
-func joinChannel(ctx context.Context, client chatpb.ChatServiceClient) {
-
-	channel := chatpb.Channel{Name: *channelName, SendersName: *senderName}
-	stream, err := client.JoinChannel(ctx, &channel)
+func joinRoom(ctx context.Context, client gamepb.MenchasticServiceClient) {
+	
+	requestJoinRoom := gamepb.RequestJoinRoom{
+		Id: 1,
+		SecretKey: "123",
+		Member: &gamepb.Member{
+			Username: *senderName,
+			DisplayName: "mehranghajari",
+		},
+	}
+	stream, err := client.JoinRoom(ctx, &requestJoinRoom)
 	if err != nil {
 		log.Fatalf("client.JoinChannel(ctx, &channel) throws: %v", err)
 	}
 
-	fmt.Printf("Joined channel: %v \n", *channelName)
+	fmt.Printf("Joined room: %v \n", *roomID)
 
-	var wg sync.WaitGroup
-
-	go func() {
-		wg.Add(1)
-		for {
-			in, err := stream.Recv()
-			if err == io.EOF {
-				wg.Done()
-				return
-			}
-			if err != nil {
-				log.Fatalf("Failed to receive message from channel joining. \nErr: %v", err)
-			}
-
-			fmt.Printf("MESSAGE: (%v) -> %v \n", in.Sender, in.Message)
+	for {
+		responseRoom, err := stream.Recv()
+		if err == io.EOF {
+			return
 		}
-	}()
+		if err != nil {
+			log.Fatalf("Failed to receive message from channel joining. \nErr: %v", err)
+		}
 
-	wg.Wait()
+		fmt.Printf("updated room: (%v) -> %v \n", responseRoom.GetRoom().Name, responseRoom.GetRoom().Id)
+	}
 }
 
-func sendMessage(ctx context.Context, client chatpb.ChatServiceClient, message string) {
-	stream, err := client.SendMessage(ctx)
+func createRoom(ctx context.Context, client gamepb.MenchasticServiceClient) {
+	
+	requestCreateRoom := gamepb.RequestCreateRoom{
+		Name: "Mench",
+		IsPrivate: "no",
+		SecretKey: "123",
+		Owner: &gamepb.Member{
+			Username: *senderName,
+			DisplayName: "mehranghajari",
+		},
+	}
+	stream, err := client.CreateRoom(ctx, &requestCreateRoom)
 	if err != nil {
-		log.Printf("Cannot send message: error: %v", err)
+		log.Fatalf("client.JoinChannel(ctx, &channel) throws: %v", err)
 	}
-	msg := chatpb.Message{
-		Channel: &chatpb.Channel{
-			Name:        *channelName,
-			SendersName: *senderName},
-		Message: message,
-		Sender:  *senderName,
-	}
-	stream.Send(&msg)
 
-	ack, err := stream.CloseAndRecv()
-	fmt.Printf("Message sent: %v \n", ack)
+	fmt.Printf("created room: %v \n", *roomID)
+
+	for {
+		responseRoom, err := stream.Recv()
+		if err == io.EOF {
+			return
+		}
+		if err != nil {
+			log.Fatalf("Failed to receive message from channel joining. \nErr: %v", err)
+		}
+
+		fmt.Printf("updated room: (%v) -> %v \n", responseRoom.GetRoom().Name, responseRoom.GetRoom().Id)
+	}
 }
+
+// func sendMessage(ctx context.Context, client chatpb.ChatServiceClient, message string) {
+// 	stream, err := client.SendMessage(ctx)
+// 	if err != nil {
+// 		log.Printf("Cannot send message: error: %v", err)
+// 	}
+// 	msg := chatpb.Message{
+// 		Channel: &chatpb.Channel{
+// 			Name:        *channelName,
+// 			SendersName: *senderName},
+// 		Message: message,
+// 		Sender:  *senderName,
+// 	}
+// 	stream.Send(&msg)
+//
+// 	ack, err := stream.CloseAndRecv()
+// 	fmt.Printf("Message sent: %v \n", ack)
+// }
 
 func main() {
 
@@ -82,13 +111,14 @@ func main() {
 	defer conn.Close()
 
 	ctx := context.Background()
-	client := chatpb.NewChatServiceClient(conn)
+	client := gamepb.NewMenchasticServiceClient(conn)
 
-	go joinChannel(ctx, client)
+	//createRoom(ctx, client)
+	joinRoom(ctx , client)
 
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		go sendMessage(ctx, client, scanner.Text())
-	}
+	// scanner := bufio.NewScanner(os.Stdin)
+	// for scanner.Scan() {
+	// 	go sendMessage(ctx, client, scanner.Text())
+	// }
 
 }
