@@ -30,7 +30,7 @@ func (s *MenchasticServiceServer) CreateRoom( req *gamepb.RequestCreateRoom, msg
 		SecretKey: req.SecretKey,
 		Owner: req.GetOwner(),
 		Members: &gamepb.Members{
-			Member: []*gamepb.Member{
+			Members: []*gamepb.Member{
 				req.GetOwner(),
 			},
 		},
@@ -55,6 +55,25 @@ func (s *MenchasticServiceServer) CreateRoom( req *gamepb.RequestCreateRoom, msg
 	}
 }
 
+func (s *MenchasticServiceServer) CreateNewRoom( id int) {
+
+	// Create Room
+	room := &gamepb.Room {
+		Id: int64(id),
+		Name: "random",
+		IsPrivate: "none",
+		SecretKey: "none",
+		Owner: nil,
+		Members: &gamepb.Members{
+			Members: []*gamepb.Member{},
+		},
+	}
+	s.mu.Lock()
+	s.rooms.Rooms = append(s.rooms.Rooms, room)
+	s.mu.Unlock()
+
+}
+
 func (s *MenchasticServiceServer) ListRoom( C context.Context,req *gamepb.RequestGame)  ( *gamepb.Rooms, error) {
 	
 	for _ , room := range s.rooms.Rooms{
@@ -67,24 +86,44 @@ func (s *MenchasticServiceServer) ListRoom( C context.Context,req *gamepb.Reques
 
 
 func (s *MenchasticServiceServer) JoinRoom( req *gamepb.RequestJoinRoom, msgStream gamepb.MenchasticService_JoinRoomServer) error {
+	var id int ;
+	var lastRoom *gamepb.Room; 
+	var isFull bool ;
+	if req.GetId() == -1 { // join randomly to a room 
+		if len(s.rooms.Rooms) == 0 {
+			s.CreateNewRoom(1)
+		}
+		lastRoom = s.rooms.Rooms[len(s.rooms.Rooms) - 1] 
+		id = int(lastRoom.Id)
+	}else {
+		id = int(req.GetId())
+	}
 
+	
 	msgChannel := make(chan *gamepb.ResponseRoom )
 
-	s.roomsChannels[roomID(req.GetId())][userneme(req.Member.GetUsername())] = msgChannel
-
-	fmt.Println(req.Member.GetUsername() , "joined the room " , req.GetId())
-
-	// send message to other members of room
-	updatedRoom := &gamepb.Room{
-		Id: req.GetId(),
-		Name: "Mench",
+	if s.roomsChannels[roomID(id)] == nil {
+		s.roomsChannels[roomID(id)] = map[userneme] chan *gamepb.ResponseRoom {}
 	}
+	s.roomsChannels[roomID(id)][userneme(req.Member.GetUsername())] = msgChannel
+	
+	fmt.Println(req.Member.GetUsername() , "joined the room " , id)
+
+	lastRoom.Members.Members = append(lastRoom.Members.Members, req.GetMember())
+
+	isFull = len(lastRoom.Members.Members) == 4
+	if isFull{
+		s.CreateNewRoom(int(lastRoom.GetId())+1)
+	}
+	
+	// send message to other members of room
 	go func() {
-		streams := s.roomsChannels[roomID(req.GetId())]
+		streams := s.roomsChannels[roomID(id)]
 		for senderName, msgChan := range streams {
 			if string(senderName) != req.Member.GetUsername(){
 				msgChan <- &gamepb.ResponseRoom{
-					Room: updatedRoom,
+					Room: lastRoom,
+					IsFull: isFull,
 				}
 			}
 		}

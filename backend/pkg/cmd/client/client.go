@@ -19,7 +19,7 @@ var tcpServer = flag.String("server", ":5400", "Tcp server")
 func joinRoom(ctx context.Context, client gamepb.MenchasticServiceClient) {
 	
 	requestJoinRoom := gamepb.RequestJoinRoom{
-		Id: 1,
+		Id: -1,
 		SecretKey: "123",
 		Member: &gamepb.Member{
 			Username: *senderName,
@@ -31,7 +31,7 @@ func joinRoom(ctx context.Context, client gamepb.MenchasticServiceClient) {
 		log.Fatalf("client.JoinChannel(ctx, &channel) throws: %v", err)
 	}
 
-	fmt.Printf("Joined room: %v \n", *roomID)
+	fmt.Printf("Joined room\n")
 
 	for {
 		responseRoom, err := stream.Recv()
@@ -43,6 +43,7 @@ func joinRoom(ctx context.Context, client gamepb.MenchasticServiceClient) {
 		}
 
 		fmt.Printf("updated room: (%v) -> %v \n", responseRoom.GetRoom().Name, responseRoom.GetRoom().Id)
+		fmt.Printf("number of members : %d , isFull : %v \n" , len(responseRoom.GetRoom().GetMembers().Members) , responseRoom.GetIsFull())
 	}
 }
 
@@ -74,6 +75,7 @@ func createRoom(ctx context.Context, client gamepb.MenchasticServiceClient) {
 		}
 
 		fmt.Printf("updated room: (%v) -> %v \n", responseRoom.GetRoom().Name, responseRoom.GetRoom().Id)
+		fmt.Printf("number of members : %d \n" , len(responseRoom.GetRoom().GetMembers().Members))
 	}
 }
 

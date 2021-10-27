@@ -18,7 +18,8 @@ message RequestCreateRoom {
 }
 
 message ResponseRoom {
-    Room room = 2;
+    Room room = 1;
+    bool isFull = 2;
 }
 
 message Room {
@@ -31,7 +32,7 @@ message Room {
 }
 
 message Members {
-    repeated Member member = 1;
+    repeated Member members = 1;
 }
 
 message Member {
